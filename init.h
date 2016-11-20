@@ -1,5 +1,20 @@
 #include "mytm4c123gh6pm.h"
 
+void EEPROM_INIT(void) {
+	int a = 0;
+	SYSCTLb->RCGCEEPROM |= 0x01;   // enable EEPROM CLock
+	for(a = 0; a < 10; a++);       // wait 6 clock cycles
+	while(EEPROM->EEDONE &= 0x01);  // Wait until EEDONE[0] == 0 (EEPROM is not busy)
+	if(EEPROM->EESUPP &= 0xC);   // if this ever fails, EEPROM chip worn out by too many cycles
+	SYSCTLb->SREEPROM |= 0x1;       // Start resetting EEPROM
+	for(a = 0; a < 10; a++);       // wait 6 clock cycles
+	SYSCTLb->SREEPROM &= 0xFFFE;       // Finish resetting EEPROM
+	for(a = 0; a < 10; a++);       // wait 6 clock cycles
+	while(EEPROM->EEDONE &= 0x01);  // Wait until EEDONE[0] == 0 (EEPROM is not busy)
+	if(EEPROM->EESUPP &= 0xC);   // if this ever fails, EEPROM chip worn out by too many cycles
+}
+
+
 void INIT_PLL(void) {
     SYSCTLb->RCC2 |= 0x80000000;     // Use RCC2
     SYSCTLb->RCC2 |= 0x00000800;   // bypass PLL while initializing
