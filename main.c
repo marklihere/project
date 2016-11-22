@@ -1,6 +1,7 @@
 #include "mytm4c123gh6pm.h"
 #include "init.h"
 #include "LCD.c"
+#include <stdlib.h>
 
 #define SSI_SR_RNE 0x00000004 // SSI Rx FIFO Not Empty
 #define SSI_SR_TFE 0x00000001 // SSI Tx FIFO Empty
@@ -37,10 +38,13 @@
 #define brymax 0xFFF
 #define brymin 0xC30
 #define rxmax 0xFFF
-#define rxmin 0xBB3
+#define rxmin 0xBFF
 #define rymax 0xFFF
 #define rymin 0xC1F
 
+// Globals
+int prev_touch = 0;  // need this global so a simple touch still restores prev darkened push
+int userPressedButton = 0;     // semaphore to synchronize ISR & Main thread
 
 // bigFont from class lab supplements
 // adapted from : http://www.henningkarlsen.com/electronics/r_fonts.php
@@ -152,8 +156,6 @@ unsigned short yarray[100];
 int xtotal = 0;
 int ytotal = 0;
 int touch = 0;
-
-
 
 void mysetArea(unsigned short x1, unsigned short x2, unsigned short y1, unsigned short y2) {
   // Column Address Set 0x2A
@@ -271,10 +273,10 @@ void fillYellow(void) {
 */
 // Input: xtotal, ytotal
 // output: 1-9
-// reuturns the touch value of color being touched
+// returns the touch value of color being touched
 unsigned int touched_color(int x, int y){
 	int temp;
-	if(x > rxmin && x < rxmax && y > rymin && y < rymax) {
+	if        (x > rxmin && x < rxmax && y > rymin && y < rymax) {
 		temp = 9;  //9 is red
 	} else if (x > yxmin && x < yxmax && y > yymin && y < yymax) {
 		temp = 7;  //7 is yellow
@@ -422,8 +424,7 @@ void getY(int i) {
 void GPIOE_Handler(void) {
 	int x = 0;
 	int i = 0;  // index
-	int divideby = 0;
-	int prev_touch = 0;
+	
 	
     // while PENIRQ is low, load 100 touchscreen values into array, average and get a position
 	// then update position on LCD
@@ -450,35 +451,13 @@ void GPIOE_Handler(void) {
 
 	  // UPDATE LCD based on current touch
 	  GPIOE->DATA &= 0xFB; // ENABLE LCD CS
-		switch(touch){
-			case 1:
-				black1(touch);
-				break;
-			case 2:
-				black1(touch);
-				break;
-			case 3:
-				black1(touch);
-				break;
-			case 4:
-				black1(touch);
-				break;
-			case 5:
-				black1(touch);
-				break;
-			case 6:
-				black1(touch);
-				break;
-			case 7:
-				black1(touch);
-				break;
-			case 8:
-				black1(touch);
-				break;
-			case 9:
-				black1(touch);
-				break;
-		}  // switch
+		if (touch > 0 && touch <= 9) {
+			black1(touch);
+			userPressedButton = 1;  // signal to main thread user pressed a button
+		} else if (touch == 0) {
+			userPressedButton = 0;  // no button pressed
+		}
+		
 
 		GPIOE->DATA |= 0x4; // DISABLE LCD CS
 		
@@ -488,21 +467,55 @@ void GPIOE_Handler(void) {
 		prev_touch = touch;
 	}  // while
 	
+	// we let go already
+	fill(touch);
+	
 	GPIOE->ICR |= 0x2;    // clear interrupt on pin [1]
 }  // Handler
-	
 
+// Reads EE prom 0x00 offset value and returns it
+int readEEPROM(void) {
+  int value;
+  int a;  // loop variable
+  EEPROM->EEOFFSET = 0x0;     
+  value =  EEPROM->EERDWR;     // Read what is in the EEPROM
+  for(a = 0; a < 10; a++);       // wait 6 clock cycles
+  while(EEPROM->EEDONE &= 0x01);  // Wait until EEDONE[0] == 0 (EEPROM is not busy)
+  return value;
+}
 
+// EEPROM write
+void writeEEPROM(int value){
+	EEPROM->EERDWR = value;  // works!
+	while(!(EEPROM->EEDONE &= 0x01));  // Wait until EEDONE[0] == 0 (EEPROM is not busy)
+}
 
+void blink(int color){
+	black1(color);
+	fill(color);
+}
 
 int main(void)
 {
-	int garbage, a;
+	int i;  // index variable
+	int seqLength = 3;     // random sequence length
+	int sequence[50];      // highly doubt someone could get 50
+	int gameOver = 0;
+	int score;
+	
+	// initialize sequences
+	for(i = 0; i < 50; i++) {
+		sequence[i] = 0;
+	}
 	INIT_PLL();
 	GPIO_INIT();
 	INIT_SSI0();
     GPIO_INT_INIT();  // Enable interrupts
 	EEPROM_INIT();
+	//SYSTICK_INIT();   // for random value generation
+	SysTick->CTRL = 0;  // disable timer
+	SysTick->LOAD = 9;  // timer value from 0 to 9
+	SysTick->CTRL = 1;  // start counting
 	
 	// Enable LCD
 	GPIOE->DATA &= 0xFB; // LCD CS = 0  1011  PE[2] = 0
@@ -531,17 +544,71 @@ int main(void)
     mywriteColor(red);
 
     printHighScoreText();
-    printScore(18);
+	printScore(readEEPROM());
+	
+	// START GAME
+	// generate initial random sequence
+	score = 0;
+	srand(SysTick->VAL);
+	for(i = 0; i < 2; i++) {
+      sequence[i] = ((rand()%9) + 1);
+    };
+	seqLength = i;  // initially is 2, as main game loop will add to sequence by 1
+	  
+	while(!gameOver) {
+	  // increase sequence length
+      sequence[seqLength] = ((rand()%9) + 1);
+      seqLength++;
+		
+      // computer turn
+	  for(i = 0; i < seqLength; i++) {
+        blink(sequence[i]);
+	  }
 
-    // EEPROM testing
-	//EEPROM->EERDWR = 99;
-	//while(!(EEPROM->EEDONE &= 0x01));  // Wait until EEDONE[0] == 0 (EEPROM is not busy)
-	// Read EEPROM
-	EEPROM->EEOFFSET = 0x0;         
-	garbage = EEPROM->EERDWR;     // Read what is in the EEPROM
-	for(a = 0; a < 10; a++);       // wait 6 clock cycles
-	while(EEPROM->EEDONE &= 0x01);  // Wait until EEDONE[0] == 0 (EEPROM is not busy)
-	printScore(garbage);
+	  // user turn
+	  i = 0;  // length of user sequence input
+	  
+	  
+	  // get user sequence
+	  // touch global var gets updated every press of touchscreen via separate interrupt
+	  // we use a semaphore in the ISR, userPressedButton, to signal to this main thread
+	  // that a user has pressed a valid button
+	
+	  do {
+		  // get a button pressed
+		  if (userPressedButton == 1) {
+			  if (sequence[i] != touch) {
+ 				  // did not match expected sequence, game over
+				  gameOver = 1;
+				  break;
+			  } else if (sequence[i] == touch) {
+				  // matched, continue to next button
+				  // did we set high score of this round this time playing (not EEprom high score)
+				  if (i > score) {
+					  score = i;
+				  }
+				  i++;
+				  
+			  }
+			  
+			  userPressedButton = 0;    // reset flag, ISR will set again when another button is pressed
+		  }
+			
+	  }  while(i < seqLength);  // we will run through this at least 3 times
+  }
+	
+	// check pattern
+	// if match, repeat
+	
+	// game over
+	//if (i > readEEPROM()) {
+    if (score > 3) {   // FINISH ME, something doesn't work here
+	  printScore(score);
+	}
+	else
+	printScore(00);
+	// writeEEPROM(newHiScore);
+    
 	
   GPIOE->DATA |= 0x4; // LCD CS = 1  // 0100  setting PE[2] = 1
   while(1);
