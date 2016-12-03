@@ -46,6 +46,13 @@
 int prev_touch = 0;  // need this global so a simple touch still restores prev darkened push
 int userPressedButton = 0;     // semaphore to synchronize ISR & Main thread
 
+unsigned short sine_array[] = {0x800,0x940,0xa78,0xba1,0xcb3,0xda7,0xe78,0xf20,
+0xf9b,0xfe6,0xfff,0xfe6,0xf9b,0xf20,0xe78,0xda7,
+0xcb3,0xba1,0xa78,0x940,0x800,0x6bf,0x587,0x45e,
+0x34c,0x258,0x187,0xdf,0x64,0x19,0x0,0x19,
+0x64,0xdf,0x187,0x258,0x34c,0x45e,0x587,0x6bf};
+
+
 // bigFont from class lab supplements
 // adapted from : http://www.henningkarlsen.com/electronics/r_fonts.php
 unsigned char BigFont[] ={
@@ -182,6 +189,22 @@ void mywriteColor(unsigned short color) {
   mywriteCmd(0x2C);
 	for(i = 0; i < cols*rows; i++)
 	  mywriteDat2(color);
+}
+
+void gameOverAnimate(void) {
+  int i;
+  int j;
+	
+for (j = 0; j < 150; j++) {
+  mywriteCmd(0x28);
+  for( i = 0; i < 20000; i++) { ;}
+  mywriteCmd(0x21);
+  for( i = 0; i < 20000; i++) { ;}
+  mywriteCmd(0x29);
+  for( i = 0; i < 20000; i++) { ;}
+  mywriteCmd(0x20);
+  for( i = 0; i < 20000; i++) { ;}
+  }
 }
 
 // function to print a character on the screen 
@@ -497,11 +520,13 @@ void blink(int color){
 
 int main(void)
 {
-	int i;  // index variable
+	unsigned int i;  // index variable
 	int seqLength = 3;     // random sequence length
 	int sequence[50];      // highly doubt someone could get 50
 	int gameOver = 0;
-	int score;
+	unsigned int score;
+	
+	unsigned int temp;
 	
 	// initialize sequences
 	for(i = 0; i < 50; i++) {
@@ -512,10 +537,12 @@ int main(void)
 	INIT_SSI0();
     GPIO_INT_INIT();  // Enable interrupts
 	EEPROM_INIT();
-	//SYSTICK_INIT();   // for random value generation
+	INIT_I2C();        
 	SysTick->CTRL = 0;  // disable timer
 	SysTick->LOAD = 9;  // timer value from 0 to 9
 	SysTick->CTRL = 1;  // start counting
+	
+	//writeEEPROM(0);  // delete me temporary  used to reset high score if needed in testing
 	
 	// Enable LCD
 	GPIOE->DATA &= 0xFB; // LCD CS = 0  1011  PE[2] = 0
@@ -584,8 +611,8 @@ int main(void)
 			  } else if (sequence[i] == touch) {
 				  // matched, continue to next button
 				  // did we set high score of this round this time playing (not EEprom high score)
-				  if (i > score) {
-					  score = i;
+				  if (i >= score) {
+					  score = i+1;
 				  }
 				  i++;
 				  
@@ -597,17 +624,27 @@ int main(void)
 	  }  while(i < seqLength);  // we will run through this at least 3 times
   }
 	
-	// check pattern
-	// if match, repeat
-	
+    // game over animation
+    gameOverAnimate();
+
 	// game over
-	//if (i > readEEPROM()) {
-    if (score > 3) {   // FINISH ME, something doesn't work here
+    temp = readEEPROM();
+	if (score > temp) {
+    //if (score >= 1) {
+	  writeEEPROM(score);
 	  printScore(score);
 	}
-	else
-	printScore(00);
-	// writeEEPROM(newHiScore);
+	
+	// Testing speaker
+	for (i = 0; i < 4000; i++) {
+	I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+    I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+    I2C0->MCS = 0x00000003;                   // Start and Run     
+    while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+    I2C0->MDR = sine_array[i%40] & 0xFF;
+    I2C0->MCS = 5;                            // Stop 
+    while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+	}
     
 	
   GPIOE->DATA |= 0x4; // LCD CS = 1  // 0100  setting PE[2] = 1

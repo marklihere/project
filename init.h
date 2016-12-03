@@ -14,6 +14,30 @@ void EEPROM_INIT(void) {
 	if(EEPROM->EESUPP &= 0xC);   // if this ever fails, EEPROM chip worn out by too many cycles
 }
 
+// Initialize I2C  for High speed mode
+void INIT_I2C(void){
+    // We want I2C Frequency of 100 KHz (standard mode)
+    // TPR = (System Clock/(2*(SCL_LP + SCL_HP)*SCL_CLK))-1;
+    // TPR = 19 (dec) = 0x13
+    #define TPR 0x13
+    SYSCTLb->RCGCI2C |= 0x0001;   // activate I2C0
+    SYSCTLb->RCGCGPIO |= 0x0002;  // activate port B
+    while((SYSCTLb->PRGPIO&0x0002) == 0){};  // ready?
+    GPIOB->AFSEL |= 0x0C;        // enable alt func on PB2, 3 
+    GPIOB->DEN |= 0x0C;          // enable digital I/O on PB2,3
+    GPIOB->ODR |= 0x08;          // enable open drain PB3, i2c0 SDA
+    GPIOB->PCTL = (GPIOB->PCTL&0xFFFF00FF) + 0x00003300;  // I2C
+               
+    I2C0->MCR = 0x00000010;     // master function enable
+    I2C0->MTPR = TPR;           // cfg for 100 Kbps initially
+
+	// send the master code
+	I2C0->MSA = 0x00001001;
+	I2C0->MCS = 0x13;
+		
+	// right now HS bit is set, but manual says subsequent Tx do not need to set HS bit
+	I2C0->MTPR = 0x01;   // reset TPR?
+}
 
 void INIT_PLL(void) {
     SYSCTLb->RCC2 |= 0x80000000;     // Use RCC2
