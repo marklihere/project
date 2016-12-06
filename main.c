@@ -191,22 +191,6 @@ void mywriteColor(unsigned short color) {
 	  mywriteDat2(color);
 }
 
-void gameOverAnimate(void) {
-  int i;
-  int j;
-	
-for (j = 0; j < 150; j++) {
-  mywriteCmd(0x28);
-  for( i = 0; i < 20000; i++) { ;}
-  mywriteCmd(0x21);
-  for( i = 0; i < 20000; i++) { ;}
-  mywriteCmd(0x29);
-  for( i = 0; i < 20000; i++) { ;}
-  mywriteCmd(0x20);
-  for( i = 0; i < 20000; i++) { ;}
-  }
-}
-
 // function to print a character on the screen 
 void printChar (char c) {
   int i, x;
@@ -228,7 +212,54 @@ void printChar (char c) {
     }
   } //for
 }
+
+
+
+void printGameOver(void) {
+	mysetArea(0, 15, 32, 47);  // try drawing a character
+  printChar('G');
+  mysetArea(16, 31, 32, 47);  // try drawing a character
+  printChar('a');
+  mysetArea(32, 47, 32, 47);  // try drawing a character
+  printChar('m');
+  mysetArea(48, 63, 32, 47);  // try drawing a character
+  printChar('e');
+  mysetArea(64, 79, 32, 47);  // try drawing a character
+  printChar(' ');
+  mysetArea(80, 95, 32, 47);  // try drawing a character
+  printChar('O');
+  mysetArea(96, 111, 32, 47);  // try drawing a character
+  printChar('v');
+  mysetArea(112, 127, 32, 47);  // try drawing a character
+  printChar('e');
+  mysetArea(128, 143, 32, 47);  // try drawing a character
+  printChar('r');
+  mysetArea(144, 159, 32, 47);  // try drawing a character
+  printChar('!');
+}
+
+
+
+void gameOverAnimate(void) {
+  int i;
+  int j;
 	
+for (j = 0; j < 150; j++) {
+  mywriteCmd(0x28);
+  for( i = 0; i < 20000; i++) { ;}
+  mywriteCmd(0x21);
+  for( i = 0; i < 20000; i++) { ;}
+  mywriteCmd(0x29);
+  for( i = 0; i < 20000; i++) { ;}
+  mywriteCmd(0x20);
+  for( i = 0; i < 20000; i++) { ;}
+  }
+
+	// Draw Game Over
+	printGameOver();
+	
+}
+
 
 // write "High Score: "
 void printHighScoreText(void) {
@@ -323,7 +354,50 @@ unsigned int touched_color(int x, int y){
 	return temp;
 }
 
+// User black draw
 void black1(int t){
+	switch(t){
+			case 1:
+				mysetArea(35, 45, 115, 125);
+				mywriteColor(black);
+				break;
+			case 2:
+				mysetArea(115, 125, 115, 125);
+				mywriteColor(black);			 
+				break;
+			case 3:
+				mysetArea(195, 205, 115, 125);
+				mywriteColor(black);
+				break;
+			case 4:
+				mysetArea(35, 45, 195, 205);
+				mywriteColor(black);
+				break;
+			case 5:
+				mysetArea(115, 125, 195, 205);
+				mywriteColor(black);
+				break;
+			case 6:
+				mysetArea(195, 205, 195, 205);
+				mywriteColor(black);
+				break;
+			case 7:
+				mysetArea(35, 45, 275, 285);
+				mywriteColor(black);
+				break;
+			case 8:
+				mysetArea(115, 125, 275, 285);
+				mywriteColor(black);
+				break;
+			case 9:
+				mysetArea(195, 205, 275, 285);
+				mywriteColor(black);
+				break;
+				
+		}
+}
+
+void black2(int t){
 	switch(t){
 			case 1:
 				mysetArea(5, 75, 85, 155);
@@ -365,7 +439,8 @@ void black1(int t){
 		}
 }
 
-void fill(int t){
+// User fill draw
+void fill1(int t){
 	switch(t){
 			case 1:
 				mysetArea(5, 75, 85, 155);
@@ -403,10 +478,53 @@ void fill(int t){
 				mysetArea(165, 235, 245, 315);
 				mywriteColor(red);
 				break;
-				
 		}
 	GPIOE->DATA |= 0x4; // DISABLE LCD CS
 }  // fill
+
+// Computer fill draw
+void fill2(int t){
+	switch(t){
+			case 1:
+				mysetArea(5, 75, 85, 155);
+				mywriteColor(white);
+				break;
+			case 2:
+				mysetArea(86, 155, 85, 155);
+				mywriteColor(cyan);			 
+				break;
+			case 3:
+				mysetArea(165, 235, 85, 155);
+				mywriteColor(green);
+				break;
+			case 4:
+				mysetArea(5, 75, 165, 235);
+				mywriteColor(blue);
+				break;
+			case 5:
+				mysetArea(86, 155, 165, 235);
+				mywriteColor(magenta);
+				break;
+			case 6:
+				mysetArea(165, 235, 165, 235);
+				mywriteColor(orange);
+				break;
+			case 7:
+				mysetArea(5, 75, 245, 315);
+				mywriteColor(yellow);
+				break;
+			case 8:
+				mysetArea(86, 155, 245, 315);
+				mywriteColor(brown);
+				break;
+			case 9:
+				mysetArea(165, 235, 245, 315);
+				mywriteColor(red);
+				break;
+		}
+	GPIOE->DATA |= 0x4; // DISABLE LCD CS
+}  // fill
+
 void GPIO_INT_INIT(void) {
 	// enable interrupts
 	GPIOE->IM |=0x2;             // allow pin[1] to interrupt
@@ -447,6 +565,7 @@ void getY(int i) {
 void GPIOE_Handler(void) {
 	int x = 0;
 	int i = 0;  // index
+	int j = 0;  // index
 	
 	
     // while PENIRQ is low, load 100 touchscreen values into array, average and get a position
@@ -471,6 +590,138 @@ void GPIOE_Handler(void) {
 	  // at this point xtotal and ytotal are the coordinates of a touch (not released yet)
       touch = touched_color(xtotal, ytotal);
 	  // touch is 0-9, 0 = no button, 1 = white...9 = red, etc.
+		
+		// Play sound based on current touch
+		switch(touch) {
+			case 1:
+				// for loop delay
+			  for (i = 0; i < 200; i++) {
+				  //for (j = 0; j < 100; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+		  break;
+			case 2:
+			  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 100; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+		  break;
+			
+		  case 3:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 200; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 4:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 300; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 5:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 400; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 6:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 500; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 7:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 600; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 8:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 700; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 9:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 800; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		}			
+		
 
 	  // UPDATE LCD based on current touch
 	  GPIOE->DATA &= 0xFB; // ENABLE LCD CS
@@ -485,13 +736,13 @@ void GPIOE_Handler(void) {
 		GPIOE->DATA |= 0x4; // DISABLE LCD CS
 		
 		if(touch != prev_touch){
-			fill(prev_touch);
+			fill1(prev_touch);
 		}
 		prev_touch = touch;
 	}  // while
 	
 	// we let go already
-	fill(touch);
+	fill1(touch);
 	
 	GPIOE->ICR |= 0x2;    // clear interrupt on pin [1]
 }  // Handler
@@ -514,8 +765,142 @@ void writeEEPROM(int value){
 }
 
 void blink(int color){
-	black1(color);
-	fill(color);
+	int i;
+	int j;
+	
+	black2(color);
+	
+	// Play sound based on current touch
+		switch(color) {
+			case 1:
+				// for loop delay
+			  for (i = 0; i < 200; i++) {
+				  //for (j = 0; j < 100; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+		  break;
+			case 2:
+			  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 100; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+		  break;
+			
+		  case 3:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 200; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 4:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 300; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 5:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 400; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 6:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 500; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 7:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 600; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 8:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 700; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;				
+		  case 9:
+				  // for loop delay
+			  for (i = 0; i < 200; i++) {
+				  for (j = 0; j < 800; j++) {};
+			  	// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+				break;
+			}
+		fill2(color);
 }
 
 int main(void)
@@ -636,6 +1021,7 @@ int main(void)
 	}
 	
 	// Testing speaker
+/*
 	for (i = 0; i < 4000; i++) {
 	I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
     I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
@@ -645,7 +1031,7 @@ int main(void)
     I2C0->MCS = 5;                            // Stop 
     while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
 	}
-    
+  */  
 	
   GPIOE->DATA |= 0x4; // LCD CS = 1  // 0100  setting PE[2] = 1
   while(1);
