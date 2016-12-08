@@ -65,8 +65,12 @@ The following items are required in order for the hardware  and software to run 
 \begin{enumerate}
 \item 5 volt source to power the DAC and LCD touchscreen.
 \item 3.3 Volt source to power the microcontroller and the LCD touchscreen.
-\item 40 Mhz crystal for the source clock.
+\item 16 Mhz external crystal for the source clock.
 \item Reset switch.
+\item TM4C123GH6PM chip.
+\item WaveShare 320x240 3.2" Resistive Touchscreen TFT LCD, using ILI9341 LCD and XPT2046 Touch Screen
+\item 12-bit AdaFruit DAC (using MCP4725)
+\item Analog Test Board Speaker with LM386M amplifier
 \end{enumerate}
 
 \subsection{Theory of Operations}
@@ -109,6 +113,11 @@ Each game has a score based on the maximum number of correct buttons.  The outpu
 The following section shows the requirement and how they are being met.
 \subsection{Requirement 1}
 There will be nine segments to display that are all separate colors.
+\begin{figure}[h]
+\includegraphics{images/InitialScreen.jpg}
+\caption{Initial Game Screen}
+\label{Figure1}
+\end{figure}
 \subsection{Requirement 2}
 There will be ten sounds outputed to a speaker using a DAC: 1 sound per button, and a game over.
 \subsection{Requirement 3}
