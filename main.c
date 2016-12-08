@@ -301,30 +301,7 @@ void printScore(int num) {
   printChar((char)ones + 48);
 }
 
-/*void fillGreen(void) {
 
-  mysetArea(67, 137, 128, 193);
-  if (g==0)
-		mywriteColor(green);
-	else
-		mywriteColor(black);
-}
-
-void fillRed(void) {
-  mysetArea(67, 137, 45, 110);
-	if (r==0)
-	  mywriteColor(red);
-	else
-		mywriteColor(black);
-}
-void fillYellow(void) {
-  mysetArea(67, 137, 211, 277);
-	if (y==0)
-  	mywriteColor(yellow);
-	else
-		mywriteColor(black);
-}
-*/
 // Input: xtotal, ytotal
 // output: 1-9
 // returns the touch value of color being touched
@@ -905,7 +882,7 @@ void blink(int color){
 
 int main(void)
 {
-	unsigned int i;  // index variable
+	unsigned int i,j;  // index variable
 	int seqLength = 3;     // random sequence length
 	int sequence[50];      // highly doubt someone could get 50
 	int gameOver = 0;
@@ -1009,9 +986,35 @@ int main(void)
 	  }  while(i < seqLength);  // we will run through this at least 3 times
   }
 	
-    // game over animation
+    // game over sound and animation
+  
+  
+	for (i = 0; i < 20000; i++) {
+		for (j = 0; j < 1500; j++) {};
+		// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+			
     gameOverAnimate();
-
+    for (i = 0; i < 2000; i++) {
+		for (j = 0; j < 800; j++) {};
+		// increment through sine wave table 
+          I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
+          I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
+          I2C0->MCS = 0x00000003;                   // Start and Run     
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+          I2C0->MDR = sine_array[i%40] & 0xFF;
+          I2C0->MCS = 5;                            // Stop 
+          while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
+				}
+	
+				
 	// game over
     temp = readEEPROM();
 	if (score > temp) {
@@ -1020,18 +1023,7 @@ int main(void)
 	  printScore(score);
 	}
 	
-	// Testing speaker
-/*
-	for (i = 0; i < 4000; i++) {
-	I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
-    I2C0->MDR = (sine_array[i%40] >> 8)&0x0F;
-    I2C0->MCS = 0x00000003;                   // Start and Run     
-    while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
-    I2C0->MDR = sine_array[i%40] & 0xFF;
-    I2C0->MCS = 5;                            // Stop 
-    while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
-	}
-  */  
+  
 	
   GPIOE->DATA |= 0x4; // LCD CS = 1  // 0100  setting PE[2] = 1
   while(1);
