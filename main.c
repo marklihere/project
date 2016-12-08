@@ -910,6 +910,7 @@ int main(void)
 	GPIOE->DATA &= 0xFB; // LCD CS = 0  1011  PE[2] = 0
 	LCD_Init();
 	
+	mywriteCmd(0x20);
 	// Draw Initial screen
 	mysetArea(0, 239, 0, 319);
     mywriteColor(black);	
@@ -989,7 +990,7 @@ int main(void)
     // game over sound and animation
   
   
-	for (i = 0; i < 20000; i++) {
+	for (i = 0; i < 2000; i++) {
 		for (j = 0; j < 1500; j++) {};
 		// increment through sine wave table 
           I2C0->MSA = 0x62 << 1;                    // LSB = 0 means Master writes
@@ -1013,6 +1014,7 @@ int main(void)
           I2C0->MCS = 5;                            // Stop 
           while(I2C0->MCS_I2C0_ALT & 0x00000001) {};  //wait
 				}
+	
 	
 				
 	// game over
